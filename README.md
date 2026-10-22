@@ -17,7 +17,7 @@ chmod +x scripts/start-prebuilt.sh scripts/stop-prebuilt.sh
 ./scripts/start-prebuilt.sh
 ```
 
-Open http://localhost:5173 and click **Demo**. Catalog, Intake, Requests, and Audit use the sample data, including table design and DDL upload. **Exit demo** returns to sign-in.
+Open http://localhost:5173 and click **Demo**. Catalog, Intake, Requests, and Audit use the sample data, including table design and DDL upload. That dataset starts in `web/src/demo/fixture.js`. While Demo is on, changes stay in this browser tab under the session storage key `odp-demo-data`. **Exit demo** returns to sign-in and clears them.
 
 Stop the processes with `./scripts/stop-prebuilt.sh`. These files are already in the checkout:
 
@@ -79,6 +79,7 @@ A table in DEV and the same table in IT are two rows. If a search returns no row
 | `cloud` | AWS, Azure |
 | `environment` | DEV, IT, UAT, PROD |
 | `universe` | Yugabyte universe, API endpoint, and YSQL configuration |
+| `universe_connection` | YSQL host, port, admin database, username, auth mode, and secret reference for one universe. Execution reads this at runtime. The password is not stored. `metadata_reader` cannot select this table |
 | `universe_region` | Regions in a universe |
 | `universe_node` | Nodes and capacity |
 | `data_owner` | Owner, contacts, and the platform user id |
@@ -98,6 +99,8 @@ The qualified name is built by the API. It is not a stored column:
 
 Example: `AWS.DEV.AWS-DEV-YB01.authz_team.authz.access_audit`.
 
+The View popup shows those six parts as separate fields: Cloud, Environment, Universe, Database, Schema, and Table.
+
 The catalog query contract, including search filters and the table-definition document, is in [docs/catalog-api.md](docs/catalog-api.md). Database passwords are not returned.
 
 Catalog writes (`registerTable`, `addCatalogColumn`, `addCatalogIndex`) use a separate admin connection (`yugabyte` / `yugabyte` locally) because the read pool is `metadata_reader`, which can only `SELECT`.
@@ -108,16 +111,18 @@ Opening **View** calls `tableById` and `tableDefinitionById`.
 
 | Popup field | Source |
 | --- | --- |
-| Qualified name | Cloud, environment, universe, database name, schema name, and table name joined by the API |
+| Cloud | Catalog cloud for this table copy |
+| Environment | DEV, IT, UAT, or PROD |
+| Universe | Universe code, such as `AWS-DEV-YB01` |
+| Database | Database name |
+| Schema | Schema name |
+| Table | Table name |
 | Owner | Intake **Project Name** |
 | Owner id | Intake **Technical Owner** when that value is an email; otherwise the signed-in **User ID** |
 | Primary contact | Intake **Technical Owner** |
 | Secondary contact | Intake **Developer Contact** |
-| Type | `BASE_TABLE`, the column default |
-| Partitioned | True when the DDL primary key has a HASH column |
-| Classification | `INTERNAL` for every intake registration, plus the intake **Business Line** |
-| YSQL | The universe configuration, not the intake form. Sample universes are enabled on port 5433 |
-| Partition | HASH columns parsed from the table DDL |
+| Columns | Column name, type, nullability, primary key, and comment |
+| Indexes | Index name, kind, uniqueness, and columns |
 | DDL | The SQL stored when the table was registered |
 
 ## UI
@@ -161,9 +166,11 @@ If the SQL succeeds and catalog registration fails, the error is: “The databas
 
 ### Promote
 
-Promotion is started from Requests, not from Intake. Choose IT, UAT, or PROD, and optionally a subset of tables. An empty selection promotes every table on the project.
+Promotion is started from Requests, not from Intake. Choose IT, UAT, or PROD, then choose the universe in that environment. Promote stays disabled until a universe and at least one table are selected. Opening Migrate selects every table on the project.
 
-Promotion does not overwrite other environments. Each environment keeps its own catalog copy. Locally, the physical database name gets a suffix: `name_it`, `name_uat`, or `name_prod`, on this same cluster. The catalog row is written to the universe for that cloud and environment, for example `AWS-IT-YB01`.
+Execution loads that universe from `catalog.universe_connection` and connects to its YSQL host. `application.yml` keeps only the catalog database connection. The password is not a column. `secret_ref` names the environment variable that holds it. Local rows use `PASSWORD` and `YB_ADMIN_PASSWORD`. `LDAP` and `CERT` are stored as auth modes and are not enabled yet.
+
+Promotion does not overwrite other environments. Each environment keeps its own catalog copy. Locally, every universe row points at `localhost:5433`, so one cluster is enough for testing. The physical database name gets a suffix: `name_it`, `name_uat`, or `name_prod`. The catalog row is written to the selected universe, for example `AWS-IT-YB01` or `AZURE-UAT-YB01`.
 
 DDL and catalog registration are not one database transaction. If the second table fails, the first table may already be registered. Run the same promotion again.
 
@@ -183,7 +190,7 @@ Tools: `list_clouds`, `list_environments`, `list_universes`, `get_universe`, `li
 
 ## Run locally
 
-Start YugabyteDB, then load the schema. `scripts/bootstrap.sh` creates `yugabyte_metadata` and applies `sql/001` through `sql/013`. `sql/002_seed.sql` truncates the catalog tables, so run bootstrap only on a fresh database.
+Start YugabyteDB, then load the schema. `scripts/bootstrap.sh` creates `yugabyte_metadata` and applies `sql/001` through `sql/014`. `sql/014_universe_connection.sql` creates the universe connection table and points all eight universes at `localhost:5433`. `sql/002_seed.sql` truncates the catalog tables, so run bootstrap only on a fresh database.
 
 ```bash
 docker compose up -d
