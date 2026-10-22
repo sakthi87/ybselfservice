@@ -1,0 +1,19 @@
+type Health {
+  status: String!
+  api: String!
+}
+
+type Session {
+  id: ID!
+  userId: String!
+  subjectId: String!
+}
+
+type Query {
+  health: Health!
+}
+
+type Mutation {
+  signIn(userId: String!, password: String!): Session
+  ensureUser(userId: String!): Session
+}

@@ -1,0 +1,11 @@
+node_modules/
+target/
+dist/
+logs/
+.env
+.DS_Store
+*.log
+.shell-check.txt
+.shell-ok.txt
+.test-status.txt
+/package-lock.json

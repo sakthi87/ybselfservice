@@ -1,0 +1,34 @@
+scalar JSON
+
+type Health {
+  status: String!
+  api: String!
+}
+
+type Query {
+  health: Health!
+  projects(userId: String!): JSON
+  project(projectId: ID!): JSON
+  requests(userId: String!): JSON
+  activity(userId: String!, requestId: String, action: String, q: String): JSON
+  openChanges(projectId: ID!): JSON
+}
+
+type Mutation {
+  register(input: JSON!): JSON
+  openChange(projectId: ID!, input: JSON!): JSON
+  finishChange(projectId: ID!, requestId: ID!): JSON
+  discardChange(projectId: ID!, requestId: ID!): Boolean
+  promote(projectId: ID!, input: JSON!): JSON
+  createDatabase(projectId: ID!, input: JSON!): JSON
+  createSchema(databaseId: ID!, input: JSON!): JSON
+  generateModel(input: JSON!): JSON
+  designTable(schemaId: ID!, input: JSON!): JSON
+  previewTable(schemaId: ID!, input: JSON!): JSON
+  createTable(schemaId: ID!, input: JSON!): JSON
+  addColumn(tableId: ID!, input: JSON!): JSON
+  addIndex(tableId: ID!, input: JSON!): JSON
+  previewDdl(schemaId: ID!, input: JSON!): JSON
+  executeDdl(schemaId: ID!, input: JSON!): JSON
+  deploy(databaseId: ID!, input: JSON!): JSON
+}

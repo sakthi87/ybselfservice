@@ -1,0 +1,39 @@
+server:
+  port: 4020
+
+platform:
+  api: intake
+
+login:
+  base-url: ${LOGIN_API_URL:http://localhost:4010}
+
+execution:
+  base-url: ${EXECUTION_API_URL:http://localhost:4030}
+
+spring:
+  graphql:
+    path: /graphql
+    graphiql:
+      enabled: true
+    schema:
+      locations: classpath:graphql/intake/
+  datasource:
+    url: jdbc:postgresql://${YB_METADATA_HOST:localhost}:${YB_METADATA_PORT:5433}/${YB_METADATA_DATABASE:yugabyte_metadata}
+    username: ${YB_METADATA_USERNAME:metadata_reader}
+    password: ${YB_METADATA_PASSWORD:metadata_reader}
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      connection-timeout: 30000
+      keepalive-time: 30000
+      max-lifetime: 180000
+      connection-init-sql: SET default_transaction_read_only = on
+  security:
+    user:
+      name: ${METADATA_API_USERNAME:metadata-gateway}
+      password: ${METADATA_API_PASSWORD:metadata-gateway}
+
+intake:
+  admin:
+    username: ${YB_ADMIN_USERNAME:yugabyte}
+    password: ${YB_ADMIN_PASSWORD:yugabyte}

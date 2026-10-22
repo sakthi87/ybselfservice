@@ -1,0 +1,31 @@
+server:
+  port: 4001
+
+metadata:
+  api:
+    base-url: ${METADATA_API_URL:http://localhost:4000}
+    username: ${METADATA_API_USERNAME:metadata-gateway}
+    password: ${METADATA_API_PASSWORD:metadata-gateway}
+
+spring:
+  security:
+    user:
+      name: ${MCP_USERNAME:metadata-reader}
+      password: ${MCP_PASSWORD:metadata-reader}
+  ai:
+    mcp:
+      server:
+        name: yugabyte-metadata
+        version: 1.0.0
+        protocol: STREAMABLE
+        type: SYNC
+        instructions: Read-only YugabyteDB metadata catalog. Tools call the Metadata API and cannot change data.
+        capabilities:
+          tool: true
+          resource: true
+          prompt: false
+          completion: false
+        annotation-scanner:
+          enabled: true
+        streamable-http:
+          mcp-endpoint: /mcp

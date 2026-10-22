@@ -1,0 +1,69 @@
+scalar JSON
+
+type Health {
+  status: String!
+  api: String!
+}
+
+input TableSearch {
+  pageSize: String
+  pageToken: String
+  page: String
+  cloud: String
+  environment: String
+  universe: String
+  database: String
+  schema: String
+  owner: String
+  ownerEmail: String
+  ownerUserId: String
+  table: String
+  tableName: String
+  q: String
+  status: String
+}
+
+input NodeSearch {
+  pageSize: String
+  pageToken: String
+  page: String
+  cloud: String
+  environment: String
+  universe: String
+  region: String
+  role: String
+  status: String
+  nodeName: String
+}
+
+type Query {
+  health: Health!
+  clouds: JSON
+  environments(cloud: String!): JSON
+  universes(cloud: String, environment: String): JSON
+  universesForCloud(cloud: String!, environment: String): JSON
+  universesForEnvironment(environment: String!, cloud: String): JSON
+  universe(id: String!): JSON
+  regions(universe: String!): JSON
+  universeNodes(universe: String!): JSON
+  databases(universe: String!): JSON
+  schemas(universe: String!, database: String!): JSON
+  schemasById(databaseId: ID!): JSON
+  tables(universe: String!, database: String!, schema: String!): JSON
+  tablesBySchema(schemaId: ID!): JSON
+  table(universe: String!, database: String!, schema: String!, name: String!): JSON
+  tableById(tableId: ID!): JSON
+  tableDefinition(universe: String!, database: String!, schema: String!, name: String!): JSON
+  tableDefinitionById(tableId: ID!): JSON
+  searchTables(filter: TableSearch): JSON
+  searchNodes(filter: NodeSearch): JSON
+  node(nodeId: ID!): JSON
+  owners: JSON
+  catalogOptions: JSON
+}
+
+type Mutation {
+  registerTable(input: JSON!): JSON
+  addCatalogColumn(input: JSON!): JSON
+  addCatalogIndex(input: JSON!): JSON
+}

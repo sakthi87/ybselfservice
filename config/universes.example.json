@@ -1,0 +1,103 @@
+{
+  "createdBy": "catalog-import",
+  "owner": {
+    "id": "owner-catalog-import",
+    "name": "Catalog import",
+    "contactName": "Catalog import",
+    "contactEmail": "catalog-import@example.com",
+    "platformUserId": "catalog-import"
+  },
+  "skipDatabases": ["postgres", "template0", "template1", "system_platform", "yugabyte_metadata"],
+  "skipSchemas": ["pg_catalog", "information_schema", "pg_toast", "cron", "yb_system"],
+  "includeNodes": true,
+  "universes": [
+    {
+      "cloud": "AWS",
+      "environment": "DEV",
+      "universeCode": "AWS-DEV-YB01",
+      "host": "aws-dev-yb01.example.com",
+      "port": 5433,
+      "database": "yugabyte",
+      "user": "yugabyte",
+      "passwordEnv": "YB_AWS_DEV_PASSWORD",
+      "sslMode": "require"
+    },
+    {
+      "cloud": "AWS",
+      "environment": "IT",
+      "universeCode": "AWS-IT-YB01",
+      "host": "aws-it-yb01.example.com",
+      "port": 5433,
+      "database": "yugabyte",
+      "user": "yugabyte",
+      "passwordEnv": "YB_AWS_IT_PASSWORD",
+      "sslMode": "require"
+    },
+    {
+      "cloud": "AWS",
+      "environment": "UAT",
+      "universeCode": "AWS-UAT-YB01",
+      "host": "aws-uat-yb01.example.com",
+      "port": 5433,
+      "database": "yugabyte",
+      "user": "yugabyte",
+      "passwordEnv": "YB_AWS_UAT_PASSWORD",
+      "sslMode": "require"
+    },
+    {
+      "cloud": "AWS",
+      "environment": "PROD",
+      "universeCode": "AWS-PROD-YB01",
+      "host": "aws-prod-yb01.example.com",
+      "port": 5433,
+      "database": "yugabyte",
+      "user": "yugabyte",
+      "passwordEnv": "YB_AWS_PROD_PASSWORD",
+      "sslMode": "require"
+    },
+    {
+      "cloud": "AZURE",
+      "environment": "DEV",
+      "universeCode": "AZURE-DEV-YB01",
+      "host": "azure-dev-yb01.example.com",
+      "port": 5433,
+      "database": "yugabyte",
+      "user": "yugabyte",
+      "passwordEnv": "YB_AZURE_DEV_PASSWORD",
+      "sslMode": "require"
+    },
+    {
+      "cloud": "AZURE",
+      "environment": "IT",
+      "universeCode": "AZURE-IT-YB01",
+      "host": "azure-it-yb01.example.com",
+      "port": 5433,
+      "database": "yugabyte",
+      "user": "yugabyte",
+      "passwordEnv": "YB_AZURE_IT_PASSWORD",
+      "sslMode": "require"
+    },
+    {
+      "cloud": "AZURE",
+      "environment": "UAT",
+      "universeCode": "AZURE-UAT-YB01",
+      "host": "azure-uat-yb01.example.com",
+      "port": 5433,
+      "database": "yugabyte",
+      "user": "yugabyte",
+      "passwordEnv": "YB_AZURE_UAT_PASSWORD",
+      "sslMode": "require"
+    },
+    {
+      "cloud": "AZURE",
+      "environment": "PROD",
+      "universeCode": "AZURE-PROD-YB01",
+      "host": "azure-prod-yb01.example.com",
+      "port": 5433,
+      "database": "yugabyte",
+      "user": "yugabyte",
+      "passwordEnv": "YB_AZURE_PROD_PASSWORD",
+      "sslMode": "require"
+    }
+  ]
+}

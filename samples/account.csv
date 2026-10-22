@@ -1,0 +1,10 @@
+column_name,data_type,description
+account_id,uuid,Unique account identifier
+customer_id,uuid,Owning customer
+account_number,text,External account number
+account_type,text,CHECKING SAVINGS or LOAN
+status,text,OPEN CLOSED or FROZEN
+currency_code,text,ISO currency code
+balance,numeric,Current balance
+opened_at,timestamp,When the account was opened
+updated_at,timestamp,Last change time

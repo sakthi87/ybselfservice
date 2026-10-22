@@ -1,0 +1,20 @@
+scalar JSON
+
+type Health {
+  status: String!
+  api: String!
+}
+
+type Query {
+  health: Health!
+}
+
+type Mutation {
+  createDatabase(input: JSON!): JSON
+  createSchema(input: JSON!): JSON
+  executeDdl(input: JSON!): JSON
+  design(input: JSON!): JSON
+  addColumn(input: JSON!): JSON
+  addIndex(input: JSON!): JSON
+  promote(input: JSON!): JSON
+}

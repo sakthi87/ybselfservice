@@ -1,0 +1,16 @@
+services:
+  yugabyte:
+    image: yugabytedb/yugabyte:latest
+    container_name: yugabyte-metadata
+    command: ["bin/yugabyted", "start", "--background=false"]
+    ports:
+      - "5433:5433"
+      - "7001:7000"
+      - "9000:9000"
+      - "15433:15433"
+    healthcheck:
+      test: ["CMD", "bin/ysqlsh", "-h", "127.0.0.1", "-U", "yugabyte", "-d", "yugabyte", "-c", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 40s
