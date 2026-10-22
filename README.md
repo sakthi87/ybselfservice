@@ -6,6 +6,22 @@ The catalog answers: which cloud, environment, universe, database, schema, and t
 
 Java 21 and Maven build the services. The UI is React on Vite.
 
+## Quick Start Steps
+
+Another machine can run the platform without Maven or npm. It needs Java 21 and Python 3. YugabyteDB on `localhost:5433` is required only for a real sign-in. The Demo button uses the sample dataset in the compiled UI and does not call the APIs.
+
+```bash
+git clone https://github.com/sakthi87/ybselfservice.git
+cd ybselfservice
+chmod +x scripts/download-prebuilt.sh scripts/start-prebuilt.sh scripts/stop-prebuilt.sh
+./scripts/download-prebuilt.sh
+./scripts/start-prebuilt.sh
+```
+
+Open http://localhost:5173 and click **Demo**. Catalog, Intake, Requests, and Audit use the sample data, including table design and DDL upload. **Exit demo** returns to sign-in.
+
+Stop the processes with `./scripts/stop-prebuilt.sh`. The jars and compiled UI come from the [v1.0.0 release](https://github.com/sakthi87/ybselfservice/releases/tag/v1.0.0). Asset paths and ports are in [RUN_WITHOUT_COMPILE.md](RUN_WITHOUT_COMPILE.md).
+
 ## Four APIs
 
 Each API is its own Maven project and its own process. They share the Java package `com.yugabyte.metadata` and talk to each other with GraphQL. Product calls are `POST /graphql`. GraphiQL is `/graphiql`. `GET /api/v1/health` is an open liveness check and returns `{"status":"UP","api":"..."}`.
@@ -175,7 +191,7 @@ cd metadata-mcp  && mvn -q package -DskipTests && java -jar target/metadata-mcp-
 cd web           && npm install && npm run dev
 ```
 
-To run the same APIs and the compiled UI on another machine without Maven or npm, use [RUN_WITHOUT_COMPILE.md](RUN_WITHOUT_COMPILE.md). The Demo button uses the sample dataset built into the UI.
+The same start path, without compiling, is in [Quick Start Steps](#quick-start-steps).
 
 | What | Where |
 | --- | --- |
