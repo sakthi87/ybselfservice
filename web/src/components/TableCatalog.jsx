@@ -407,7 +407,6 @@ function columnLabel(column) {
 
 function TableDialog({ view, onClose }) {
   const { summary, detail, definition, loading, error } = view;
-  const ysql = definition?.target?.ysql || {};
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div
@@ -432,8 +431,28 @@ function TableDialog({ view, onClose }) {
           <>
             <dl className="facts">
               <div>
-                <dt>Qualified name</dt>
-                <dd>{definition.target?.qualifiedName || summary.qualifiedName}</dd>
+                <dt>Cloud</dt>
+                <dd>{definition.cloud || summary.cloud}</dd>
+              </div>
+              <div>
+                <dt>Environment</dt>
+                <dd>{definition.environment || summary.environment}</dd>
+              </div>
+              <div>
+                <dt>Universe</dt>
+                <dd>{definition.universe || summary.universeCode}</dd>
+              </div>
+              <div>
+                <dt>Database</dt>
+                <dd>{definition.database || summary.databaseName}</dd>
+              </div>
+              <div>
+                <dt>Schema</dt>
+                <dd>{definition.schema || summary.schemaName}</dd>
+              </div>
+              <div>
+                <dt>Table</dt>
+                <dd>{definition.table || summary.tableName}</dd>
               </div>
               <div>
                 <dt>Owner</dt>
@@ -449,34 +468,6 @@ function TableDialog({ view, onClose }) {
               <div>
                 <dt>Secondary contact</dt>
                 <dd>{detail.owner.secondaryContact || "—"}</dd>
-              </div>
-              <div>
-                <dt>Type</dt>
-                <dd>
-                  {detail.tableInfo.type}
-                  <span>{detail.tableInfo.partitioned ? "Partitioned" : "Not partitioned"}</span>
-                </dd>
-              </div>
-              <div>
-                <dt>Classification</dt>
-                <dd>
-                  {detail.metadata.classification || "—"}
-                  <span>{detail.metadata.businessDomain || ""}</span>
-                </dd>
-              </div>
-              <div>
-                <dt>YSQL</dt>
-                <dd>
-                  {ysql.enabled ? "Enabled" : "Disabled"}
-                  <span>{ysql.port ? `port ${ysql.port}` : definition.target?.apiEndpoint || ""}</span>
-                </dd>
-              </div>
-              <div>
-                <dt>Partition</dt>
-                <dd>
-                  {definition.partitioning?.strategy || "—"}
-                  <span>{definition.partitioning?.definition || ""}</span>
-                </dd>
               </div>
             </dl>
 
