@@ -8,19 +8,29 @@ Java 21 and Maven build the services. The UI is React on Vite.
 
 ## Quick Start Steps
 
-Another machine can run the platform without Maven or npm. It needs Java 21 and Python 3. YugabyteDB on `localhost:5433` is required only for a real sign-in. The Demo button uses the sample dataset in the compiled UI and does not call the APIs.
+Another machine can run the platform without Maven or npm. It needs Java 21 and Python 3. The API jars and the compiled UI are already in the repository, so a mirror checkout can start without downloading a GitHub Release. YugabyteDB on `localhost:5433` is required only for a real sign-in. The Demo button uses the sample dataset in the compiled UI and does not call the APIs.
 
 ```bash
 git clone https://github.com/sakthi87/ybselfservice.git
 cd ybselfservice
-chmod +x scripts/download-prebuilt.sh scripts/start-prebuilt.sh scripts/stop-prebuilt.sh
-./scripts/download-prebuilt.sh
+chmod +x scripts/start-prebuilt.sh scripts/stop-prebuilt.sh
 ./scripts/start-prebuilt.sh
 ```
 
 Open http://localhost:5173 and click **Demo**. Catalog, Intake, Requests, and Audit use the sample data, including table design and DDL upload. **Exit demo** returns to sign-in.
 
-Stop the processes with `./scripts/stop-prebuilt.sh`. The jars and compiled UI come from the [v1.0.0 release](https://github.com/sakthi87/ybselfservice/releases/tag/v1.0.0). Asset paths and ports are in [RUN_WITHOUT_COMPILE.md](RUN_WITHOUT_COMPILE.md).
+Stop the processes with `./scripts/stop-prebuilt.sh`. These files are already in the checkout:
+
+| File | Location |
+| --- | --- |
+| Catalog API | `metadata-api/target/metadata-api-1.0.0.jar` |
+| Login API | `login-api/target/login-api-1.0.0.jar` |
+| Intake API | `intake-api/target/intake-api-1.0.0.jar` |
+| Execution API | `execution-api/target/execution-api-1.0.0.jar` |
+| MCP | `metadata-mcp/target/metadata-mcp-1.0.0.jar` |
+| Compiled UI | `web/dist` |
+
+`scripts/download-prebuilt.sh` replaces those files from a GitHub Release. Skip it when release downloads are blocked. Ports are in [RUN_WITHOUT_COMPILE.md](RUN_WITHOUT_COMPILE.md).
 
 ## Four APIs
 

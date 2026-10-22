@@ -19,7 +19,7 @@ start_jar() {
   local jar="$2"
   if [[ ! -f "$jar" ]]; then
     echo "ERROR: Missing $jar"
-    echo "Run ./scripts/download-prebuilt.sh first."
+    echo "This file is part of the repository. Check the checkout, or run ./scripts/download-prebuilt.sh if GitHub release downloads are allowed."
     exit 1
   fi
   echo "Starting $name"
@@ -34,7 +34,7 @@ start_jar intake-api intake-api/target/intake-api-1.0.0.jar
 start_jar metadata-mcp metadata-mcp/target/metadata-mcp-1.0.0.jar
 
 if [[ ! -f web/dist/index.html ]]; then
-  echo "ERROR: Missing web/dist. Run ./scripts/download-prebuilt.sh first."
+  echo "ERROR: Missing web/dist. This directory is part of the repository."
   exit 1
 fi
 
