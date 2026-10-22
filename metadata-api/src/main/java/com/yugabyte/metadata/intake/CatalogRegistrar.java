@@ -112,12 +112,13 @@ public final class CatalogRegistrar {
       String ddl,
       ProjectContext project,
       String cloud,
-      String environment)
+      String environment,
+      String universeCode)
       throws SQLException {
     String actor = actor(firstText(project.platformUserId(), project.techOwnerEmail()));
     String ownerId = upsertOwner(connection, project, actor);
     UUID contextId = insertContext(connection, project, null, null, null, actor);
-    UUID universeId = universeFor(connection, cloud, environment);
+    UUID universeId = universeFor(connection, universeCode, cloud, environment);
     UUID databaseId = upsertDatabase(connection, universeId, databaseName, project.techOwnerEmail(), actor);
     UUID schemaId = upsertSchema(connection, databaseId, schemaName, project.techOwnerEmail(), actor);
     boolean partitioned = partitionKey != null && !partitionKey.isEmpty();
@@ -252,9 +253,9 @@ public final class CatalogRegistrar {
   }
 
   public static UUID catalogTableId(
-      Connection connection, String cloud, String environment, String databaseName, String schemaName, String tableName)
+      Connection connection, String cloud, String environment, String universeCode, String databaseName, String schemaName, String tableName)
       throws SQLException {
-    UUID universe = universeFor(connection, cloud, environment);
+    UUID universe = universeFor(connection, universeCode, cloud, environment);
     try (PreparedStatement statement = connection.prepareStatement("""
         SELECT t.table_id
           FROM catalog.table_metadata t
@@ -396,7 +397,32 @@ public final class CatalogRegistrar {
     }
   }
 
-  private static UUID universeFor(Connection connection, String cloud, String environment) throws SQLException {
+  private static UUID universeFor(Connection connection, String universeCode, String cloud, String environment) throws SQLException {
+    if (universeCode != null && !universeCode.isBlank()) {
+      try (PreparedStatement statement = connection.prepareStatement("""
+          SELECT u.universe_id, c.cloud_code::text AS cloud_code, e.environment_code::text AS environment_code
+            FROM catalog.universe u
+            JOIN catalog.environment e ON e.environment_id = u.environment_id
+            JOIN catalog.cloud c ON c.cloud_id = e.cloud_id
+           WHERE u.universe_code = ?
+          """)) {
+        statement.setString(1, universeCode.trim());
+        try (ResultSet rows = statement.executeQuery()) {
+          if (!rows.next()) {
+            throw new BadRequestException("Universe " + universeCode + " was not found");
+          }
+          String provider = rows.getString("cloud_code");
+          String level = rows.getString("environment_code");
+          if (cloud != null && !cloud.isBlank() && !provider.equalsIgnoreCase(cloud.trim())) {
+            throw new BadRequestException("Universe " + universeCode + " is not in cloud " + cloud);
+          }
+          if (environment != null && !environment.isBlank() && !level.equalsIgnoreCase(environment.trim())) {
+            throw new BadRequestException("Universe " + universeCode + " is not in " + environment);
+          }
+          return rows.getObject("universe_id", UUID.class);
+        }
+      }
+    }
     String provider = cloud == null || cloud.isBlank() ? "AWS" : cloud.trim().toUpperCase(Locale.ROOT);
     String target = environment == null || environment.isBlank() ? "DEV" : environment.trim().toUpperCase(Locale.ROOT);
     try (PreparedStatement statement = connection.prepareStatement("""

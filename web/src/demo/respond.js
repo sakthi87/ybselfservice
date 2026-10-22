@@ -446,6 +446,9 @@ function promote(state, projectId, input) {
   const project = findProject(state, projectId);
   const environment = required(input.environment, "Environment").toUpperCase();
   if (!["IT", "UAT", "PROD"].includes(environment)) throw new Error("Choose IT, UAT, or PROD");
+  const universe = UNIVERSES.find((item) => item.code === required(input.universeCode, "Universe"));
+  if (!universe) throw new Error("Universe was not found");
+  if (universe.environment !== environment) throw new Error(`Universe ${universe.code} is not in ${environment}`);
   const selected = new Set(input.tableIds || []);
   const groups = new Map();
   for (const database of project.databases) {
@@ -474,12 +477,12 @@ function promote(state, projectId, input) {
       deployed_at: new Date().toISOString(),
     });
     for (const item of group) {
-      copyCatalog(state, item, environment, targetName);
+      copyCatalog(state, item, universe, targetName);
     }
-    record(state, input.requestId, "PROMOTED", "table", names.join(", "), `Promoted to ${environment} as ${targetName}`);
+    record(state, input.requestId, "PROMOTED", "table", names.join(", "), `Promoted to ${universe.code} as ${targetName}`);
     promotions.push({ targetDatabase: targetName, tables: names.join(", "), catalog: names });
   }
-  return { environment, cloud: "AWS", catalogUpdated: true, databaseApplied: true, promotions };
+  return { environment: universe.environment, cloud: universe.cloud, universeCode: universe.code, catalogUpdated: true, databaseApplied: true, promotions };
 }
 
 function generateModel(input) {
@@ -741,22 +744,22 @@ function addCatalogFromIntake(state, found, table, input) {
   void input;
 }
 
-function copyCatalog(state, item, environment, targetName) {
+function copyCatalog(state, item, universe, targetName) {
   const source = state.tables.find((table) => table.tableId === item.table.catalogTableId);
   if (!source) return;
-  const universe = UNIVERSES.find((entry) => entry.cloud === "AWS" && entry.environment === environment);
-  const copyId = `${source.tableId}-${environment.toLowerCase()}`;
+  const copyId = `${source.tableId}-${universe.code}`;
   state.tables = state.tables.filter((table) => table.tableId !== copyId);
   state.tables.unshift({
     ...source,
     tableId: copyId,
-    environment,
+    cloud: universe.cloud,
+    environment: universe.environment,
     universeCode: universe.code,
     universeName: universe.name,
-    databaseId: `${source.databaseId}-${environment.toLowerCase()}`,
+    databaseId: `${source.databaseId}-${universe.code}`,
     databaseName: targetName,
-    schemaId: `${source.schemaId}-${environment.toLowerCase()}`,
-    qualifiedName: `AWS.${environment}.${universe.code}.${targetName}.${source.schemaName}.${source.tableName}`,
+    schemaId: `${source.schemaId}-${universe.code}`,
+    qualifiedName: `${universe.cloud}.${universe.environment}.${universe.code}.${targetName}.${source.schemaName}.${source.tableName}`,
     updatedAt: new Date().toISOString(),
   });
 }

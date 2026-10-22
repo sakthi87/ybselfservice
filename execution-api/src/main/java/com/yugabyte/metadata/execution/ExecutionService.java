@@ -18,11 +18,13 @@ import org.springframework.stereotype.Service;
 @Service
 public class ExecutionService {
   private final AdminConnections connections;
+  private final UniverseConnections universes;
   private final DdlBuilder ddl;
   private final ServiceClient clients;
 
-  public ExecutionService(AdminConnections connections, DdlBuilder ddl, ServiceClient clients) {
+  public ExecutionService(AdminConnections connections, UniverseConnections universes, DdlBuilder ddl, ServiceClient clients) {
     this.connections = connections;
+    this.universes = universes;
     this.ddl = ddl;
     this.clients = clients;
   }
@@ -31,7 +33,7 @@ public class ExecutionService {
     String databaseName = ddl.requireName(required(body, "databaseName"), "Database name");
     ddl.requireDatabaseName(databaseName);
     try {
-      createDatabase(databaseName);
+      createDatabase(universes.dev(), databaseName);
       return Map.of("databaseName", databaseName, "catalogUpdated", true, "databaseApplied", true);
     } catch (SQLException exception) {
       throw sql(exception);
@@ -42,7 +44,8 @@ public class ExecutionService {
     String databaseName = ddl.requireName(required(body, "databaseName"), "Database name");
     String schemaName = ddl.requireName(required(body, "schemaName"), "Schema name");
     ddl.rejectPublicSchema(schemaName);
-    try (Connection target = connections.open(databaseName)) {
+    UniverseConnections.UniverseTarget dev = universes.dev();
+    try (Connection target = open(dev, databaseName)) {
       execute(target, "CREATE SCHEMA " + quote(schemaName));
       return Map.of("databaseName", databaseName, "schemaName", schemaName, "catalogUpdated", true, "databaseApplied", true);
     } catch (SQLException exception) {
@@ -145,7 +148,10 @@ public class ExecutionService {
 
   public Map<String, Object> promote(Map<String, Object> body) {
     String environment = required(body, "environment").toUpperCase(Locale.ROOT);
-    String cloud = text(body.get("cloud"), "AWS");
+    UniverseConnections.UniverseTarget targetUniverse = universes.forCode(required(body, "universeCode"));
+    if (!targetUniverse.environment().equals(environment)) {
+      throw new BadRequestException("Universe " + targetUniverse.universeCode() + " is not in " + environment);
+    }
     List<Map<String, Object>> tables = maps(body.get("tables"));
     if (tables.isEmpty()) {
       throw new BadRequestException("Select at least one table to promote");
@@ -160,7 +166,7 @@ public class ExecutionService {
       String targetName = ddl.targetDatabase(sourceName, environment);
       ddl.requireDatabaseName(targetName);
       try {
-        createDatabase(targetName);
+        createDatabase(targetUniverse, targetName);
       } catch (SQLException exception) {
         throw sql(exception);
       }
@@ -177,15 +183,16 @@ public class ExecutionService {
         for (String statement : statements) {
           ddl.assertExecutable(statement);
         }
-        try (Connection target = connections.open(targetName)) {
+        try (Connection target = open(targetUniverse, targetName)) {
           execute(target, "CREATE SCHEMA IF NOT EXISTS " + quote(schemaName));
           executeScript(target, schemaName, statements);
         } catch (SQLException exception) {
           throw sql(exception);
         }
         Map<String, Object> request = new LinkedHashMap<>();
-        request.put("cloud", cloud);
-        request.put("environment", environment);
+        request.put("cloud", targetUniverse.cloud());
+        request.put("environment", targetUniverse.environment());
+        request.put("universeCode", targetUniverse.universeCode());
         request.put("project", table.get("project"));
         try {
           registered.addAll(registerStatements(parsedStatements(script), targetName, schemaName, request));
@@ -201,8 +208,9 @@ public class ExecutionService {
       promotions.add(promotion);
     }
     Map<String, Object> result = new LinkedHashMap<>();
-    result.put("environment", environment);
-    result.put("cloud", cloud);
+    result.put("environment", targetUniverse.environment());
+    result.put("cloud", targetUniverse.cloud());
+    result.put("universeCode", targetUniverse.universeCode());
     result.put("catalogUpdated", true);
     result.put("databaseApplied", true);
     result.put("promotions", promotions);
@@ -229,6 +237,7 @@ public class ExecutionService {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("cloud", text(body.get("cloud"), "AWS"));
         payload.put("environment", text(body.get("environment"), "DEV"));
+        payload.put("universeCode", text(body.get("universeCode"), ""));
         payload.put("databaseName", databaseName);
         payload.put("schemaName", schemaName);
         payload.put("tableName", index.tableName());
@@ -242,6 +251,7 @@ public class ExecutionService {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("cloud", text(body.get("cloud"), "AWS"));
         payload.put("environment", text(body.get("environment"), "DEV"));
+        payload.put("universeCode", text(body.get("universeCode"), ""));
         payload.put("databaseName", databaseName);
         payload.put("schemaName", schemaName);
         payload.put("tableName", column.tableName());
@@ -301,6 +311,7 @@ public class ExecutionService {
     Map<String, Object> registration = new LinkedHashMap<>();
     registration.put("cloud", text(body.get("cloud"), "AWS"));
     registration.put("environment", text(body.get("environment"), "DEV"));
+    registration.put("universeCode", text(body.get("universeCode"), ""));
     registration.put("databaseName", databaseName);
     registration.put("schemaName", schemaName);
     registration.put("tableName", parsed.name());
@@ -329,19 +340,23 @@ public class ExecutionService {
   }
 
   private void run(String database, String schema, List<String> statements) throws SQLException {
-    try (Connection target = connections.open(database)) {
+    try (Connection target = open(universes.dev(), database)) {
       executeScript(target, schema, statements);
     }
   }
 
-  private void createDatabase(String databaseName) throws SQLException {
-    try (Connection admin = connections.open("yugabyte")) {
+  private void createDatabase(UniverseConnections.UniverseTarget target, String databaseName) throws SQLException {
+    try (Connection admin = open(target, target.adminDatabase())) {
       execute(admin, "CREATE DATABASE " + quote(databaseName));
     } catch (SQLException exception) {
       if (exception.getMessage() == null || !exception.getMessage().toLowerCase(Locale.ROOT).contains("already exists")) {
         throw exception;
       }
     }
+  }
+
+  private Connection open(UniverseConnections.UniverseTarget target, String database) throws SQLException {
+    return connections.open(target.host(), target.port(), database, target.username(), target.password(), target.sslMode());
   }
 
   private void executeScript(Connection connection, String schema, List<String> statements) throws SQLException {

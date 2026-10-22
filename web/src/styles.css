@@ -1020,6 +1020,7 @@ button:disabled {
 
 .form-actions,
 .promotion-actions,
+.migrate-target,
 .audit-filters {
   display: flex;
   gap: 8px;
@@ -1030,6 +1031,19 @@ button:disabled {
   align-items: end;
   margin-bottom: 16px;
   flex-wrap: wrap;
+}
+
+.migrate-target {
+  margin-top: 12px;
+  align-items: end;
+  flex-wrap: wrap;
+}
+
+.migrate-target label {
+  display: grid;
+  gap: 4px;
+  color: #526072;
+  font-size: 13px;
 }
 
 .audit-filters label {

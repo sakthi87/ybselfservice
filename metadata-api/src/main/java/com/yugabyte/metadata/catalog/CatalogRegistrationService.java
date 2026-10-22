@@ -32,7 +32,7 @@ public class CatalogRegistrationService {
     CatalogRegistrar.ProjectContext project = project(body.get("project"));
     try (Connection connection = connections.openCatalog()) {
       CatalogRegistrar.Registration registration = CatalogRegistrar.registerUploaded(
-          connection, databaseName, schemaName, tableName, columns, partitionKey, ddl, project, cloud, environment);
+          connection, databaseName, schemaName, tableName, columns, partitionKey, ddl, project, cloud, environment, text(body.get("universeCode"), ""));
       String actor = project.techOwnerEmail();
       for (DdlBuilder.ParsedIndex index : indexes(body.get("indexes"))) {
         CatalogRegistrar.addUploadedIndex(connection, registration.catalogTableId(), index, actor);
@@ -57,7 +57,7 @@ public class CatalogRegistrationService {
     String environment = text(body.get("environment"), "DEV").toUpperCase();
     try (Connection connection = connections.openCatalog()) {
       java.util.UUID tableId = CatalogRegistrar.catalogTableId(
-          connection, cloud, environment, required(body, "databaseName"), required(body, "schemaName"), required(body, "tableName"));
+          connection, cloud, environment, text(body.get("universeCode"), ""), required(body, "databaseName"), required(body, "schemaName"), required(body, "tableName"));
       if (tableId == null) {
         throw new BadRequestException("Catalog table was not found for " + cloud + " " + environment);
       }
@@ -77,7 +77,7 @@ public class CatalogRegistrationService {
         required(body, "tableName"), required(body, "indexName"), strings(body.get("columns")), Boolean.TRUE.equals(body.get("unique")));
     try (Connection connection = connections.openCatalog()) {
       java.util.UUID tableId = CatalogRegistrar.catalogTableId(
-          connection, cloud, environment, required(body, "databaseName"), required(body, "schemaName"), index.tableName());
+          connection, cloud, environment, text(body.get("universeCode"), ""), required(body, "databaseName"), required(body, "schemaName"), index.tableName());
       if (tableId == null) {
         throw new BadRequestException("Catalog table was not found for " + cloud + " " + environment);
       }

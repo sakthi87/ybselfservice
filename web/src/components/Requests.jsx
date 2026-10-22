@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useState } from "react";
 import { gql } from "../graphql.js";
+import { getOptions } from "../api.js";
 
 async function api(query, variables) {
   const data = await gql("/intake/graphql", query, variables);
@@ -12,6 +13,9 @@ export function Requests({ user }) {
   const [dialog, setDialog] = useState(null);
   const [expanded, setExpanded] = useState({});
   const [checked, setChecked] = useState([]);
+  const [universes, setUniverses] = useState([]);
+  const [targetEnv, setTargetEnv] = useState("IT");
+  const [universeCode, setUniverseCode] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
@@ -25,12 +29,22 @@ export function Requests({ user }) {
     load().catch((exception) => setError(exception.message));
   }, [user.userId]);
 
+  useEffect(() => {
+    const choices = universes.filter((universe) => universe.environment === targetEnv);
+    if (choices.length === 1) setUniverseCode(choices[0].code);
+  }, [universes, targetEnv]);
+
   function openDialog(projectId, mode) {
     const project = rows.find((item) => item.project_id === projectId);
     const ids = (project?.databases || []).flatMap((database) => (database.tableList || []).map((table) => table.table_id));
     setSelected(projectId);
     setDialog(mode);
-    if (mode === "migrate") setChecked(ids);
+    if (mode === "migrate") {
+      setChecked(ids);
+      setTargetEnv("IT");
+      setUniverseCode("");
+      getOptions().then((options) => setUniverses(options.universes || [])).catch((exception) => setError(exception.message));
+    }
   }
 
   function closeDialog() {
@@ -38,16 +52,16 @@ export function Requests({ user }) {
     setDialog(null);
   }
 
-  async function promote(environment, tableIds) {
+  async function promote(environment, universe, tableIds) {
     setError("");
     setMessage("");
     try {
       const result = await api("mutation($projectId: ID!, $input: JSON!) { result: promote(projectId: $projectId, input: $input) }", {
         projectId: selected,
-        input: { environment, tableIds },
+        input: { environment, universeCode: universe, tableIds },
       });
       const names = (result.promotions || []).map((item) => `${item.tables} → ${item.targetDatabase}`).join("; ");
-      setMessage(`Promoted to ${result.environment}. ${names}`);
+      setMessage(`Promoted to ${result.universeCode || universe} (${result.environment}). ${names}`);
       await load();
     } catch (exception) {
       setError(exception.message);
@@ -63,6 +77,7 @@ export function Requests({ user }) {
   const detail = rows.find((item) => item.project_id === selected);
   const tableRows = (detail?.databases || []).flatMap((database) =>
     (database.tableList || []).map((table) => ({ ...table, database_name: database.database_name })));
+  const universeChoices = universes.filter((universe) => universe.environment === targetEnv);
 
   return (
     <section className="requests">
@@ -217,14 +232,25 @@ export function Requests({ user }) {
                   ))}
                 </tbody>
               </table>
-              <div className="promotion-actions">
-                {["IT", "UAT", "PROD"].map((environment) => (
-                  <button key={environment} type="button" disabled={checked.length === 0} onClick={() => promote(environment, checked)}>
-                    Promote selected to {environment}
-                  </button>
-                ))}
+              <div className="migrate-target">
+                <label>Environment
+                  <select value={targetEnv} onChange={(event) => { setTargetEnv(event.target.value); setUniverseCode(""); }}>
+                    {["IT", "UAT", "PROD"].map((environment) => <option key={environment} value={environment}>{environment}</option>)}
+                  </select>
+                </label>
+                <label>Universe
+                  <select value={universeCode} onChange={(event) => setUniverseCode(event.target.value)}>
+                    <option value="">Select a universe</option>
+                    {universeChoices.map((universe) => (
+                      <option key={universe.code} value={universe.code}>{universe.code} · {universe.cloud}</option>
+                    ))}
+                  </select>
+                </label>
+                <button type="button" disabled={checked.length === 0 || !universeCode} onClick={() => promote(targetEnv, universeCode, checked)}>
+                  Promote selected
+                </button>
               </div>
-              <p className="hint">{checked.length} of {tableRows.length} tables selected. Select all to migrate the whole request, or leave one table selected to migrate only that table.</p>
+              <p className="hint">{checked.length} of {tableRows.length} tables selected. Choose the target universe, then promote the selected tables.</p>
             </>
           )}
         </div>

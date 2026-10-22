@@ -31,6 +31,14 @@ public class AdminConnections {
     return connection;
   }
 
+  public Connection open(String host, int port, String database, String login, String secret, String sslMode) throws SQLException {
+    String ssl = sslMode == null || sslMode.isBlank() ? "disable" : sslMode;
+    String target = "jdbc:postgresql://" + host + ":" + port + "/" + database + "?sslmode=" + ssl;
+    Connection connection = DriverManager.getConnection(target, login, secret);
+    connection.setAutoCommit(true);
+    return connection;
+  }
+
   private String jdbcUrl(String database) {
     int query = url.indexOf('?');
     String base = query < 0 ? url : url.substring(0, query);

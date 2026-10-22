@@ -334,6 +334,7 @@ public class IntakeService {
 
   public Map<String, Object> promote(String projectId, Map<String, Object> body) {
     String environment = required(body, "environment").toUpperCase(Locale.ROOT);
+    String universeCode = required(body, "universeCode");
     UUID project = uuid(projectId, "Project");
     List<String> requested = stringList(body.get("tableIds"));
     List<Map<String, Object>> tables;
@@ -389,7 +390,7 @@ public class IntakeService {
     }
     Map<String, Object> request = new LinkedHashMap<>();
     request.put("environment", environment);
-    request.put("cloud", "AWS");
+    request.put("universeCode", universeCode);
     request.put("tables", payload);
     Map<String, Object> applied = clients.execution("promote", request);
     try (Connection connection = connections.openCatalog()) {
@@ -403,7 +404,7 @@ public class IntakeService {
             VALUES (?, ?, ?, 'DEPLOYED', ?) RETURNING deployment_id
             """, database, environment, targetName, names);
         record(connection, emailOfProject(connection, project), "PROMOTED", "table", names,
-            "Promoted to " + environment + " as " + targetName, requestId(body), requestDescription(body));
+            "Promoted to " + environment + " " + universeCode + " as " + targetName, requestId(body), requestDescription(body));
       }
       return applied;
     } catch (SQLException exception) {
