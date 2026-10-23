@@ -9,6 +9,7 @@ const EMPTY_FILTERS = {
   schemaId: "",
   tableName: "",
   owner: "",
+  carId: "",
   q: "",
 };
 
@@ -114,6 +115,7 @@ export function TableCatalog({ user }) {
       table: applied.tableName,
       owner: scope === "owned" ? "" : applied.owner,
       ownerUserId: scope === "owned" ? user.userId : "",
+      carId: applied.carId,
       q: applied.q,
     })
       .then((body) => {
@@ -335,6 +337,14 @@ export function TableCatalog({ user }) {
               </option>
             ))}
           </select>
+        </label>
+        <label>
+          CAR ID
+          <input
+            value={filters.carId}
+            onChange={(event) => setFilters((current) => ({ ...current, carId: event.target.value }))}
+            placeholder="CAR-4401"
+          />
         </label>
         <label className="search-field">
           Search

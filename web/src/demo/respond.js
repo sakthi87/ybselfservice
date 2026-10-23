@@ -175,6 +175,7 @@ function searchTables(state, filter) {
     if (filter.table && table.tableName !== filter.table) return false;
     if (filter.owner && table.dataOwnerId !== filter.owner) return false;
     if (filter.ownerUserId && table.ownerUserId !== filter.ownerUserId) return false;
+    if (filter.carId && String(table.carId || "").toLowerCase() !== String(filter.carId).trim().toLowerCase()) return false;
     if (filter.q) {
       const query = String(filter.q).toLowerCase();
       const haystack = [table.tableName, table.ownerName, table.databaseName, table.schemaName, table.qualifiedName].join(" ").toLowerCase();
@@ -712,6 +713,7 @@ function addCatalogFromIntake(state, found, table, input) {
     dataOwnerId: "owner-demouser",
     ownerName: found.project.project_name,
     ownerUserId: "demo.user",
+    carId: found.project.car_id || "",
     contactName: "Tech Owner",
     contactEmail: found.project.tech_owner_email || "demo.user@example.com",
     secondaryName: null,

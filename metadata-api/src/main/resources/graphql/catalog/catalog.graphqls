@@ -19,6 +19,7 @@ input TableSearch {
   ownerUserId: String
   table: String
   tableName: String
+  carId: String
   q: String
   status: String
 }

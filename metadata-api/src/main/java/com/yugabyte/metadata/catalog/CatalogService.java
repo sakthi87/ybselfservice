@@ -588,6 +588,7 @@ public class CatalogService {
     filter.eqLower("platform_user_id", blankToNull(query.get("ownerUserId")));
     filter.eq("table_name", blankToNull(query.get("table")));
     filter.ilike("table_name", blankToNull(query.get("tableName")));
+    filter.eqLower("car_id", blankToNull(query.get("carId")));
     String q = blankToNull(query.get("q"));
     if (q != null) {
       filter.params.add("%" + q.trim() + "%");
