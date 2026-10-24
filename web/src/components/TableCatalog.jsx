@@ -465,6 +465,13 @@ function TableDialog({ view, onClose }) {
                 <dd>{definition.table || summary.tableName}</dd>
               </div>
               <div>
+                <dt>Entitlement</dt>
+                <dd>
+                  {detail.entitlement?.code || "—"}
+                  {detail.entitlement?.name ? <span> {detail.entitlement.name}</span> : null}
+                </dd>
+              </div>
+              <div>
                 <dt>Owner</dt>
                 <dd>
                   {detail.owner.name}

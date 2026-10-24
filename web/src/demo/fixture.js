@@ -19,6 +19,8 @@ export function initialDemoState() {
         ownerName: "Customer Data Platform",
         ownerUserId: "customer.owner",
         carId: "CAR-4401",
+        entitlementCode: "ENT-CUSTOMER-HUB",
+        entitlementName: "Customer Hub",
         contactName: "Ada Modeler",
         contactEmail: "ada.modeler@example.com",
         classification: "CONFIDENTIAL",
@@ -52,6 +54,8 @@ export function initialDemoState() {
         ownerName: "Finance",
         ownerUserId: "finance.owner",
         carId: "CAR-4402",
+        entitlementCode: "ENT-CUSTOMER-HUB",
+        entitlementName: "Customer Hub",
         contactName: "Finance Owner",
         contactEmail: "finance.owner@example.com",
         classification: "INTERNAL",
@@ -85,6 +89,8 @@ export function initialDemoState() {
         ownerName: "Customer Hub",
         ownerUserId: "demo.user",
         carId: "CAR-4401",
+        entitlementCode: "ENT-CUSTOMER-HUB-DEV",
+        entitlementName: "Customer Hub DEV",
         contactName: "Tech Owner",
         contactEmail: "tech.owner@example.com",
         secondaryName: "Dev Contact",
@@ -121,6 +127,8 @@ export function initialDemoState() {
         dataOwnerId: "owner-demouser",
         ownerName: "Demo Reader",
         ownerUserId: "demo.user",
+        entitlementCode: "ENT-GQL-FLOW",
+        entitlementName: "GraphQL flow",
         contactName: "Demo User",
         contactEmail: "demo.user@example.com",
         classification: "INTERNAL",
@@ -155,6 +163,8 @@ export function initialDemoState() {
         dataOwnerId: "owner-authz",
         ownerName: "AuthZ Team",
         ownerUserId: "authz.owner",
+        entitlementCode: "ENT-AUTHZ",
+        entitlementName: "AuthZ database",
         contactName: "AuthZ Owner",
         contactEmail: "authz.owner@example.com",
         classification: "INTERNAL",
@@ -268,6 +278,70 @@ export function initialDemoState() {
         work_count: 3,
       },
     ],
+    entitlements: [
+      entitlement({
+        entitlementId: "demo-ent-hub-prod",
+        code: "ENT-CUSTOMER-HUB",
+        name: "Customer Hub",
+        description: "Access to customer_hub in AWS production. Every table in that database carries this entitlement.",
+        databaseId: "demo-cat-db-hub-prod",
+        databaseName: "customer_hub",
+        ownerName: "Customer Data Platform",
+        cloud: "AWS",
+        environment: "PROD",
+        universeCode: "AWS-PROD-YB01",
+        members: [
+          member("demo.user", "Demo User", "demo.user@example.com", "OWNER"),
+          member("ada.modeler", "Ada Modeler", "ada.modeler@example.com", "MEMBER"),
+        ],
+      }),
+      entitlement({
+        entitlementId: "demo-ent-hub-dev",
+        code: "ENT-CUSTOMER-HUB-DEV",
+        name: "Customer Hub DEV",
+        description: "Access to customer_hub in AWS development.",
+        databaseId: "demo-cat-db-hub-dev",
+        databaseName: "customer_hub",
+        ownerName: "Customer Hub",
+        cloud: "AWS",
+        environment: "DEV",
+        universeCode: "AWS-DEV-YB01",
+        members: [
+          member("demo.user", "Demo User", "demo.user@example.com", "MEMBER"),
+          member("tech.owner", "Tech Owner", "tech.owner@example.com", "OWNER"),
+        ],
+      }),
+      entitlement({
+        entitlementId: "demo-ent-gql",
+        code: "ENT-GQL-FLOW",
+        name: "GraphQL flow",
+        description: "Access to the gql_flow database.",
+        databaseId: "demo-cat-db-gql",
+        databaseName: "gql_flow",
+        ownerName: "Demo Reader",
+        cloud: "AWS",
+        environment: "DEV",
+        universeCode: "AWS-DEV-YB01",
+        members: [
+          member("demo.user", "Demo User", "demo.user@example.com", "OWNER"),
+        ],
+      }),
+      entitlement({
+        entitlementId: "demo-ent-authz",
+        code: "ENT-AUTHZ",
+        name: "AuthZ database",
+        description: "Access to authz_team on Azure development.",
+        databaseId: "demo-cat-db-authz",
+        databaseName: "authz_team",
+        ownerName: "AuthZ Team",
+        cloud: "AZURE",
+        environment: "DEV",
+        universeCode: "AZURE-DEV-YB01",
+        members: [
+          member("authz.owner", "AuthZ Owner", "authz.owner@example.com", "OWNER"),
+        ],
+      }),
+    ],
     activity: [
       activity("1", "2026-03-02T15:00:00Z", null, "SIGN_IN", "user", "demo.user", "Signed in as demo.user"),
       activity("2", "2026-03-02T15:04:00Z", "REQ-DEMO1001", "INTAKE_SUBMITTED", "project", "Customer Hub", "ODP Req ID ODP-DEMO1001"),
@@ -326,6 +400,14 @@ function intakeColumn(column_name, data_type, is_nullable, is_primary_key, ordin
 
 function intakeIndex(index_name, column_names, is_unique) {
   return { index_name, column_names, is_unique };
+}
+
+function entitlement(value) {
+  return value;
+}
+
+function member(userId, fullName, email, association) {
+  return { userId, fullName, email, association };
 }
 
 function activity(activity_id, created_at, request_id, action, object_type, object_name, description) {

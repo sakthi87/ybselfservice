@@ -61,6 +61,8 @@ type Query {
   node(nodeId: ID!): JSON
   owners: JSON
   catalogOptions: JSON
+  entitlements(userId: String): JSON
+  entitlement(entitlementId: ID!): JSON
 }
 
 type Mutation {

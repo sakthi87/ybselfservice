@@ -3,6 +3,7 @@ import { gql } from "./graphql.js";
 import { AuditLog } from "./components/AuditLog.jsx";
 import { IntakeFlow } from "./components/IntakeFlow.jsx";
 import { Requests } from "./components/Requests.jsx";
+import { Entitlements } from "./components/Entitlements.jsx";
 import { TableCatalog } from "./components/TableCatalog.jsx";
 import { DEMO_USER, demoEnabled, enterDemo, exitDemo } from "./demo/mode.js";
 import { initialDemoState } from "./demo/fixture.js";
@@ -16,6 +17,7 @@ const PRODUCTS = [
 
 const YUGABYTE_TABS = [
   { id: "catalog", label: "Catalog" },
+  { id: "entitlements", label: "Entitlements" },
   { id: "intake", label: "Intake" },
   { id: "requests", label: "Requests" },
   { id: "audit", label: "Audit" },
@@ -97,6 +99,7 @@ export function App() {
               </nav>
               <div className="section-body">
                 {section === "catalog" && <TableCatalog user={user} />}
+                {section === "entitlements" && <Entitlements user={user} />}
                 {section === "intake" && <IntakeFlow user={user} />}
                 {section === "requests" && <Requests user={user} />}
                 {section === "audit" && <AuditLog user={user} />}

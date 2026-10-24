@@ -49,5 +49,6 @@ SQL
 "$PSQL" -h "$HOST" -p "$PORT" -U "$USER_NAME" -d "$DB_NAME" -v ON_ERROR_STOP=1 -f "$ROOT/sql/012_owner_email_optional.sql"
 "$PSQL" -h "$HOST" -p "$PORT" -U "$USER_NAME" -d "$DB_NAME" -v ON_ERROR_STOP=1 -f "$ROOT/sql/013_intake_form_fields.sql"
 "$PSQL" -h "$HOST" -p "$PORT" -U "$USER_NAME" -d "$DB_NAME" -v ON_ERROR_STOP=1 -f "$ROOT/sql/014_universe_connection.sql"
+"$PSQL" -h "$HOST" -p "$PORT" -U "$USER_NAME" -d "$DB_NAME" -v ON_ERROR_STOP=1 -f "$ROOT/sql/015_entitlement.sql"
 
 echo "Catalog loaded into ${DB_NAME}."

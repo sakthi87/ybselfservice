@@ -7,6 +7,20 @@ async function result(query, variables) {
   return data.result;
 }
 
+export function getEntitlements(userId) {
+  return result(
+    "query($userId: String) { result: entitlements(userId: $userId) }",
+    { userId: userId || null }
+  );
+}
+
+export function getEntitlement(entitlementId) {
+  return result(
+    "query($entitlementId: ID!) { result: entitlement(entitlementId: $entitlementId) }",
+    { entitlementId }
+  );
+}
+
 export function getOptions() {
   return result("query { result: catalogOptions }");
 }

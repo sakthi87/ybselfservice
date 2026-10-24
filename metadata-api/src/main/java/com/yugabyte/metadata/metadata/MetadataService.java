@@ -106,4 +106,12 @@ public class MetadataService {
   public Map<String, Object> options() {
     return catalog.options();
   }
+
+  public List<Map<String, Object>> entitlements(String userId) {
+    return catalog.entitlements(userId);
+  }
+
+  public Map<String, Object> entitlement(String entitlementId) {
+    return catalog.entitlement(entitlementId);
+  }
 }

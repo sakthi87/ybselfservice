@@ -135,6 +135,16 @@ public class CatalogGraphQlController {
     return catalog.options();
   }
 
+  @QueryMapping
+  Object entitlements(@Argument String userId) {
+    return catalog.entitlements(userId);
+  }
+
+  @QueryMapping
+  Object entitlement(@Argument String entitlementId) {
+    return catalog.entitlement(entitlementId);
+  }
+
   @MutationMapping
   Object registerTable(@Argument Map<String, Object> input) {
     return registration.register(input);

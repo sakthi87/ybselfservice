@@ -35,6 +35,12 @@ export function demoResult(query, variables) {
     case "tableDefinitionById":
       result = definitionView(findTable(state, input.tableId));
       break;
+    case "entitlements":
+      result = entitlements(state, input.userId);
+      break;
+    case "entitlement":
+      result = entitlementDetail(state, input.entitlementId);
+      break;
     case "searchNodes":
       result = page([]);
       break;
@@ -165,6 +171,41 @@ function schemaTables(state, schemaId) {
     .map((item) => ({ tableId: item.tableId, tableName: item.tableName }));
 }
 
+function entitlements(state, userId) {
+  const mine = userId ? String(userId).toLowerCase() : "";
+  return (state.entitlements || [])
+    .filter((item) => !mine || item.members.some((member) => member.userId.toLowerCase() === mine))
+    .map((item) => ({
+      entitlementId: item.entitlementId,
+      code: item.code,
+      name: item.name,
+      databaseId: item.databaseId,
+      databaseName: item.databaseName,
+      ownerName: item.ownerName,
+      universeCode: item.universeCode,
+      environment: item.environment,
+      cloud: item.cloud,
+    }));
+}
+
+function entitlementDetail(state, entitlementId) {
+  const item = (state.entitlements || []).find((entry) => entry.entitlementId === entitlementId);
+  if (!item) throw new Error("Entitlement was not found");
+  return {
+    entitlementId: item.entitlementId,
+    code: item.code,
+    name: item.name,
+    description: item.description,
+    databaseId: item.databaseId,
+    databaseName: item.databaseName,
+    ownerName: item.ownerName,
+    universeCode: item.universeCode,
+    environment: item.environment,
+    cloud: item.cloud,
+    members: item.members,
+  };
+}
+
 function searchTables(state, filter) {
   const items = state.tables.filter((table) => {
     if (filter.cloud && table.cloud !== filter.cloud) return false;
@@ -222,6 +263,7 @@ function tableView(table) {
       primaryContact: formatContact(table.contactName, table.contactEmail),
       secondaryContact: table.secondaryEmail ? formatContact(table.secondaryName, table.secondaryEmail) : null,
     },
+    entitlement: table.entitlementCode ? { code: table.entitlementCode, name: table.entitlementName } : null,
     tableInfo: { type: table.tableType, status: table.status, partitioned: Boolean(table.partitioned) },
     columns: table.columns,
     indexes: table.indexes,

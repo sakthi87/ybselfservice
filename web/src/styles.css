@@ -843,6 +843,7 @@ button:disabled {
 
 .section-nav {
   display: flex;
+  flex-wrap: wrap;
   gap: 0;
   border-bottom: 1px solid #d5dbe3;
   margin-bottom: 16px;

@@ -368,6 +368,80 @@ public class CatalogService {
     return body;
   }
 
+  public List<Map<String, Object>> entitlements(String userId) {
+    String person = userId == null || userId.isBlank() ? "" : userId.trim().toLowerCase(java.util.Locale.ROOT);
+    List<Map<String, Object>> rows = rows("""
+        SELECT d.database_id, d.database_name, d.database_owner,
+               u.universe_code, env.environment_code, c.cloud_code,
+               e.entitlement_id, e.entitlement_code, e.entitlement_name, e.description
+          FROM catalog.database_metadata d
+          JOIN catalog.universe u ON u.universe_id = d.universe_id
+          JOIN catalog.environment env ON env.environment_id = u.environment_id
+          JOIN catalog.cloud c ON c.cloud_id = env.cloud_id
+          LEFT JOIN catalog.entitlement e
+            ON e.database_id = d.database_id
+           AND e.status = 'ACTIVE'
+         WHERE d.status = 'ACTIVE'
+           AND (? = '' OR EXISTS (
+                 SELECT 1
+                   FROM catalog.entitlement_member m
+                  WHERE m.entitlement_id = e.entitlement_id
+                    AND lower(m.user_id) = ?
+               ))
+         ORDER BY c.cloud_code, env.environment_code, u.universe_code, d.database_name
+        """, person, person);
+    return rows.stream().map(this::entitlementSummary).toList();
+  }
+
+  public Map<String, Object> entitlement(String entitlementId) {
+    UUID id = uuidOrNotFound(entitlementId, "Entitlement");
+    Map<String, Object> row = one("""
+        SELECT e.entitlement_id, e.entitlement_code, e.entitlement_name, e.description,
+               d.database_id, d.database_name, d.database_owner,
+               u.universe_code, env.environment_code, c.cloud_code
+          FROM catalog.entitlement e
+          JOIN catalog.database_metadata d ON d.database_id = e.database_id
+          JOIN catalog.universe u ON u.universe_id = d.universe_id
+          JOIN catalog.environment env ON env.environment_id = u.environment_id
+          JOIN catalog.cloud c ON c.cloud_id = env.cloud_id
+         WHERE e.entitlement_id = ?
+           AND e.status = 'ACTIVE'
+        """, id);
+    if (row == null) {
+      throw new NotFoundException("Entitlement " + entitlementId + " was not found");
+    }
+    Map<String, Object> body = entitlementSummary(row);
+    body.put("description", row.get("description"));
+    body.put("members", rows("""
+        SELECT user_id, full_name, email, association
+          FROM catalog.entitlement_member
+         WHERE entitlement_id = ?
+         ORDER BY CASE association WHEN 'OWNER' THEN 0 ELSE 1 END, full_name
+        """, id).stream().map(member -> {
+      Map<String, Object> item = new LinkedHashMap<>();
+      item.put("userId", member.get("user_id"));
+      item.put("fullName", member.get("full_name"));
+      item.put("email", member.get("email"));
+      item.put("association", member.get("association"));
+      return item;
+    }).toList());
+    return body;
+  }
+
+  private Map<String, Object> entitlementSummary(Map<String, Object> row) {
+    Map<String, Object> item = new LinkedHashMap<>();
+    item.put("entitlementId", text(row.get("entitlement_id")));
+    item.put("code", row.get("entitlement_code"));
+    item.put("name", row.get("entitlement_name"));
+    item.put("databaseId", text(row.get("database_id")));
+    item.put("databaseName", row.get("database_name"));
+    item.put("ownerName", row.get("database_owner"));
+    item.put("universeCode", row.get("universe_code"));
+    item.put("environment", row.get("environment_code"));
+    item.put("cloud", row.get("cloud_code"));
+    return item;
+  }
+
   private TableBundle loadTable(String tableId) {
     UUID id = uuidOrNotFound(tableId, "Table");
     Map<String, Object> table = one("""
@@ -378,10 +452,14 @@ public class CatalogService {
             c.cloud_code, e.environment_code, u.universe_code, u.api_endpoint, u.configuration,
             d.database_name, s.schema_name,
             o.data_owner_id, o.owner_name, o.primary_contact_name, o.primary_contact_email,
-            o.secondary_contact_name, o.secondary_contact_email, o.platform_user_id
+            o.secondary_contact_name, o.secondary_contact_email, o.platform_user_id,
+            ent.entitlement_code, ent.entitlement_name
           FROM catalog.table_metadata t
           JOIN catalog.schema_metadata s ON s.schema_id = t.schema_id
           JOIN catalog.database_metadata d ON d.database_id = s.database_id
+          LEFT JOIN catalog.entitlement ent
+            ON ent.database_id = d.database_id
+           AND ent.status = 'ACTIVE'
           JOIN catalog.universe u ON u.universe_id = d.universe_id
           JOIN catalog.environment e ON e.environment_id = u.environment_id
           JOIN catalog.cloud c ON c.cloud_id = e.cloud_id
@@ -440,6 +518,7 @@ public class CatalogService {
     body.put("database", table.get("database_name"));
     body.put("schema", table.get("schema_name"));
     body.put("owner", owner(table));
+    body.put("entitlement", entitlementOf(table));
     Map<String, Object> info = new LinkedHashMap<>();
     info.put("type", table.get("table_type"));
     info.put("status", table.get("status"));
@@ -560,6 +639,16 @@ public class CatalogService {
     owner.put("primaryContact", formatContact(table.get("primary_contact_name"), table.get("primary_contact_email")));
     owner.put("secondaryContact", formatContact(table.get("secondary_contact_name"), table.get("secondary_contact_email")));
     return owner;
+  }
+
+  private static Map<String, Object> entitlementOf(Map<String, Object> table) {
+    if (table.get("entitlement_code") == null) {
+      return null;
+    }
+    Map<String, Object> entitlement = new LinkedHashMap<>();
+    entitlement.put("code", table.get("entitlement_code"));
+    entitlement.put("name", table.get("entitlement_name"));
+    return entitlement;
   }
 
   private boolean primary(TableBundle bundle, Map<String, Object> column) {
